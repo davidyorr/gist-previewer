@@ -1,0 +1,20 @@
+{
+  "name": "Gist Previewer",
+  "description": "Preview gist html/js/css code.",
+  "version": "1.0",
+  "content_scripts": [
+    {
+      "matches": ["https://gist.github.com/*"],
+      "js": [ "js/gistpreviewer.js" ],
+      "css": [ "css/gistpreviewer.css" ],
+      "run_at": "document_end"
+    }
+  ],
+  "options_page": "options.html",
+  "icons": {
+    "16": "img/icon.png",
+    "48": "img/icon.png",
+    "128": "img/icon.png"
+  },
+  "manifest_version": 2
+}

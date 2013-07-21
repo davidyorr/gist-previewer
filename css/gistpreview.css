@@ -1,0 +1,85 @@
+
+.gistpreview-runButton {
+  color: #ecc525;
+  color: #e944c8;
+  padding: 0 10px;
+  font-weight: 700;
+}
+
+.gistpreview-runButton:hover {
+  cursor: pointer;
+  color: #ff8ce8;
+}
+
+#gistpreview-windowContainer {
+  position: fixed;
+  left: 50%;
+  float: left;
+  margin-top: -100%;
+  z-index: 200;
+}
+
+#gistpreview-window {
+  position: absolute;
+  width: 80%;
+  background: #fff;
+  z-index: 200;
+  border-radius: 5px;
+  border: 1px solid #C0C0C0;
+  box-shadow: 0px 2px 35px rgba(0, 0, 0, 0.7);
+}
+
+#gistpreview-resizer {
+  height: 4px;
+  width: 100%;
+  background: #2e2e2e;
+  z-index: 200;
+}
+
+#gistpreview-resizer:hover {
+  cursor: ns-resize;
+}
+
+#gistpreview-overlay {
+  background: #eee;
+  opacity: 0;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 101;
+}
+
+.gistpreview-panel {
+  height: 30px;
+  width: 100%;
+  background: #e7e7e7;
+  border-bottom: 2px solid #7a7a7a;
+  border-radius: 5px 5px 0 0;
+}
+
+.gistpreview-panelButton {
+  height: 30px;
+  line-height: 30px;
+  float: left;
+  padding: 0 10px;
+  font-weight: 700;
+}
+
+.gistpreview-panelButton:hover {
+  cursor: pointer;
+  background: #ccc;
+}
+
+#gistpreview-close {
+  float: right;
+}
+
+#gistpreview-iframe {
+  background: rgba(0,0,0,0);
+  width: 100%;
+}
+
+iframe {
+  border: none;
+}
