@@ -93,7 +93,7 @@ function addJs(sourceCode, jsCode, pos) {
   if (normalizeCode(sourceCode).indexOf(normalizeCode(jsCode)) > -1) {
     return sourceCode;
   }
-  return sourceCode.splice(pos, '<script>'+jsCode+'</script>');
+  return stringSplice(sourceCode, pos, '<script>'+jsCode+'</script>');
 };
 
 // removes a lot of unneccesary stuff in the code,
@@ -163,7 +163,7 @@ function addCss(sourceCode, cssCode, pos) {
   if (normalizeCode(sourceCode).indexOf(normalizeCode(cssCode)) > -1) {
     return sourceCode;
   }
-  return sourceCode.splice(pos, '<br><style>'+cssCode+'</style><br>');
+  return stringSplice(sourceCode, pos, '<br><style>'+cssCode+'</style><br>');
 };
 
 // Inject the 'Preview HTML' button at the top of each file
@@ -380,16 +380,13 @@ function getFirstChildWithClass(parentDiv, className) {
   }
 };
 
-if (typeof String.prototype.splice === 'undefined') {
-  String.prototype.splice = function(idx, str) {
-    if (idx > 0) {
-      return (this.slice(0,idx) + str + this.slice(idx,this.length));
-    } else {
-      return str+this;
-    }
+function stringSplice(str, idx, insertStr) {
+  if (idx > 0) {
+    return str.slice(0, idx) + insertStr + str.slice(idx, str.length);
+  } else {
+    return insertStr + str;
   }
 }
-
 
 // Init
 // -----------------------------------------------------------------------------
