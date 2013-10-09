@@ -78,7 +78,6 @@ function retrieveJs(sourceCode) {
       if (xhReq.readyState === 4 && xhReq.status === 200) {
         sourceCode = addJs(sourceCode, xhReq.responseText, pos);
         if (cssFiles.length === 0) {
-          console.log('calling displayWindow from retrieveJs()');
           displayWindow(sourceCode);
         } else {
           retrieveCss(sourceCode);
@@ -92,7 +91,6 @@ function retrieveJs(sourceCode) {
 
 function addJs(sourceCode, jsCode, pos) {
   if (normalizeCode(sourceCode).indexOf(normalizeCode(jsCode)) > -1) {
-    console.log('already contains js');
     return sourceCode;
   }
   return sourceCode.splice(pos, '<script>'+jsCode+'</script>');
@@ -120,22 +118,15 @@ function normalizeCode(code) {
   }
   code = split.join('');
 
-  // change multiple blank lines into a single blank line
-  while (code.indexOf('\n\n') > -1) {
-    code = code.replace('\n\n', '\n');
-  }
-
-  // change multiple tab chars into a single tab char
-  while (code.indexOf('\t\t') > -1) {
-    code = code.replace('\t\t', '\t');
-  }
+  // convert multiple blank lines into a single blank line
+  // and multiple tab chars into single tab char
+  code = code.replace(/\n{2,}/g, '\n').replace(/\t{2,}/g, '\t');
 
   return code;
 };
 
 function retrieveCss(sourceCode) {
   if (cssFiles.length === 0) {
-    console.log('calling displayWindow from retrieveCss()');
     displayWindow(sourceCode);
     return;
   }
@@ -170,7 +161,6 @@ function retrieveCss(sourceCode) {
 
 function addCss(sourceCode, cssCode, pos) {
   if (normalizeCode(sourceCode).indexOf(normalizeCode(cssCode)) > -1) {
-    console.log('already contains css');
     return sourceCode;
   }
   return sourceCode.splice(pos, '<br><style>'+cssCode+'</style><br>');
@@ -333,7 +323,6 @@ function runButtonHandler(e) {
 };
 
 function closeButtonHandler(e) {
-  console.log(previewWindowDiv);
   previewWindowDiv.parentNode.removeChild(previewWindowDiv);
   fadeOutDiv(theatreOverlayDiv, function() {
     theatreOverlayDiv.parentNode.removeChild(theatreOverlayDiv)
