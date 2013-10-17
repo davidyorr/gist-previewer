@@ -18,7 +18,6 @@ var previewIFrame;
 var previewWindowPanel;
 var theatreOverlayDiv;
 var bottomResizeDiv;
-var parentDocument = document;
 var prevBrowserWidth = window.outerWidth;
 var prevBrowserHeight = window.outerHeight;
 
@@ -37,7 +36,7 @@ function initFileObjects(sourceCode) {
     var fileActionsDiv = getFirstChildWithClass(metaDiv, 'file-actions');
     var filetype = getFirstChildWithClass(fileActionsDiv, 'file-language').innerHTML;
 
-    if (filetype === "JavaScript" || filetype === "CSS") {
+    if (filetype === 'JavaScript' || filetype === 'CSS') {
       var buttonGroupDiv = getFirstChildWithClass(fileActionsDiv, 'button-group');
       var buttons = buttonGroupDiv.children;
       var linkURL = undefined;
@@ -210,7 +209,6 @@ function injectPreviewHTMLButtons(interval) {
 // -----------------------------------------------------------------------------
 
 function displayWindow(sourceCode) {
-  completeHTMLSource = sourceCode;
   previewWindowDiv = document.createElement('div');
   previewIFrame = document.createElement('iframe');
   previewWindowPanel = buildPanel();
