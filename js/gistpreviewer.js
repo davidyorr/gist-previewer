@@ -169,10 +169,14 @@ function addCss(sourceCode, cssCode, pos) {
 // Inject the 'Preview HTML' button at the top of each file
 // -----------------------------------------------------------------------------
 
-function injectPreviewHTMLButtons() {
+function injectPreviewHTMLButtons(interval) {
   var fileboxDivs = document.getElementsByClassName('file-box');
   for (var i = 0; i < fileboxDivs.length; i++) {
     var metaDiv = getFirstChildWithClass(fileboxDivs[i], 'meta');
+    if (!metaDiv) {
+      return;
+    }
+    clearInterval(interval);
     var fileActionsDiv = getFirstChildWithClass(metaDiv, 'file-actions');
     var filetype = getFirstChildWithClass(fileActionsDiv, 'file-language').innerHTML;
     if (filetype === 'HTML') {
@@ -185,15 +189,19 @@ function injectPreviewHTMLButtons() {
         }
       }
       linkURL = linkURL.href;
-      var previewButtonLi = document.createElement('li');
-      var previewButtonSpan = document.createElement('span');
-      previewButtonSpan.className = 'gistpreview-runButton';
-      previewButtonSpan['data-linkURL'] = linkURL;
-      previewButtonSpan.innerHTML = 'Preview HTML';
-      previewButtonLi.appendChild(previewButtonSpan);
-      buttonGroupDiv.appendChild(previewButtonLi);
+      // make sure we haven't already added it
+      if (!getFirstChildWithClass(buttonGroupDiv, 'gistpreview-li')) {
+        var previewButtonLi = document.createElement('li');
+        previewButtonLi.className = 'gistpreview-li';
+        var previewButtonSpan = document.createElement('span');
+        previewButtonSpan.className = 'gistpreview-runButton';
+        previewButtonSpan['data-linkURL'] = linkURL;
+        previewButtonSpan.innerHTML = 'Preview HTML';
+        previewButtonLi.appendChild(previewButtonSpan);
+        buttonGroupDiv.appendChild(previewButtonLi);
 
-      previewButtonSpan.addEventListener('mousedown', runButtonHandler, false);
+        previewButtonSpan.addEventListener('mousedown', runButtonHandler, false);
+      }
     }
   }
 };
@@ -201,7 +209,7 @@ function injectPreviewHTMLButtons() {
 // Window UI
 // -----------------------------------------------------------------------------
 
-function displayWindow(sourceCode) {;
+function displayWindow(sourceCode) {
   completeHTMLSource = sourceCode;
   previewWindowDiv = document.createElement('div');
   previewIFrame = document.createElement('iframe');
@@ -391,8 +399,34 @@ function stringSplice(str, idx, insertStr) {
 // Init
 // -----------------------------------------------------------------------------
 
-try {
-  injectPreviewHTMLButtons();
-} catch (e) {
-
+function init() {
+  var interval = setInterval(function() {
+    injectPreviewHTMLButtons(interval);
+  }, 500);
 }
+
+// returns true if a link was clicked
+function urlChanged(target) {
+  if (!target) {
+    return false;
+  }
+
+  if (target.tagName === 'A') {
+    return true;
+  } else {
+    return urlChanged(target.parentNode);
+  }
+}
+
+function handleUrlChange(e) {
+  if (urlChanged(e.target)) {
+    init();
+  }
+}
+
+// GitHub changes pages using ajax, so we catch when a link is clicked
+window.addEventListener('mousedown', handleUrlChange, false);
+window.addEventListener('keydown', handleUrlChange, false);
+
+// if the gist is reached directly
+init();
