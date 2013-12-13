@@ -32,17 +32,17 @@ function initFileObjects(sourceCode) {
   var fileboxDivs = document.getElementsByClassName('file-box');
   for (var i = 0; i < fileboxDivs.length; i++) {
     var fileboxDiv = fileboxDivs[i];
-    var metaDiv = getFirstChildWithClass(fileboxDiv, 'meta');
-    var fileActionsDiv = getFirstChildWithClass(metaDiv, 'file-actions');
-    var filetype = getFirstChildWithClass(fileActionsDiv, 'file-language').innerHTML;
+    var metaDiv = fileboxDiv.getElementsByClassName('meta')[0];
+    var fileActionsDiv = metaDiv.getElementsByClassName('file-actions')[0];
+    var filetype = fileActionsDiv.getElementsByClassName('file-language')[0].innerHTML;
 
     if (filetype === 'JavaScript' || filetype === 'CSS') {
-      var buttonGroupDiv = getFirstChildWithClass(fileActionsDiv, 'button-group');
+      var buttonGroupDiv = fileActionsDiv.getElementsByClassName('button-group')[0];
       var buttons = buttonGroupDiv.children;
       var linkURL = undefined;
       for (var j = 0; j < buttons.length; j++) {
         if (linkURL === undefined) {
-          linkURL = getFirstChildWithClass(buttons[j], 'raw-url');
+          linkURL = buttons[j].getElementsByClassName('raw-url')[0];
         }
       }
 
@@ -180,25 +180,25 @@ function injectPreviewHTMLButtons(interval) {
 
   var fileboxDivs = document.getElementsByClassName('file-box');
   for (var i = 0; i < fileboxDivs.length; i++) {
-    var metaDiv = getFirstChildWithClass(fileboxDivs[i], 'meta');
+    var metaDiv = fileboxDivs[i].getElementsByClassName('meta')[0];
     if (!metaDiv) {
       return;
     }
     clearInterval(interval);
-    var fileActionsDiv = getFirstChildWithClass(metaDiv, 'file-actions');
-    var filetype = getFirstChildWithClass(fileActionsDiv, 'file-language').innerHTML;
+    var fileActionsDiv = metaDiv.getElementsByClassName('file-actions')[0];
+    var filetype = fileActionsDiv.getElementsByClassName('file-language')[0].innerHTML;
     if (filetype === 'HTML') {
-      var buttonGroupDiv = getFirstChildWithClass(fileActionsDiv, 'button-group');
+      var buttonGroupDiv = fileActionsDiv.getElementsByClassName('button-group')[0];
       var buttons = buttonGroupDiv.children;
       var linkURL = undefined;
       for (var j = 0; j < buttons.length; j++) {
         if (linkURL === undefined) {
-          linkURL = getFirstChildWithClass(buttons[j], 'raw-url');
+          linkURL = buttons[j].getElementsByClassName('raw-url')[0];
         }
       }
       linkURL = linkURL.href;
       // make sure we haven't already added it
-      if (!getFirstChildWithClass(buttonGroupDiv, 'gistpreview-li')) {
+      if (buttonGroupDiv.getElementsByClassName('gistpreview-li').length === 0) {
         var previewButtonLi = document.createElement('li');
         previewButtonLi.className = 'gistpreview-li';
         var previewButtonSpan = document.createElement('span');
@@ -385,15 +385,6 @@ function stopResize(e) {
 
 // Util
 // -----------------------------------------------------------------------------
-
-function getFirstChildWithClass(parentDiv, className) {
-  var children = parentDiv.children;
-  for (var i = 0; i < children.length; i++) {
-    if (children[i].className.indexOf(className) > -1) {
-      return children[i];
-    }
-  }
-};
 
 function stringSplice(str, idx, insertStr) {
   if (idx > 0) {
