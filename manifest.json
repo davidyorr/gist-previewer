@@ -1,7 +1,7 @@
 {
   "name": "Gist Previewer",
   "description": "Preview gist html/js/css code.",
-  "version": "1.0",
+  "version": "1.0.0",
   "content_scripts": [
     {
       "matches": ["https://gist.github.com/*"],

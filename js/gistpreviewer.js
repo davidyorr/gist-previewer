@@ -169,6 +169,15 @@ function addCss(sourceCode, cssCode, pos) {
 // -----------------------------------------------------------------------------
 
 function injectPreviewHTMLButtons(interval) {
+  // the DOM elements that display the file names have a width of 610px.
+  // inserting the 'Preview HTML' button causes the permalink button to
+  // be overlapped almost completely by the file name element. this
+  // makes the file name elements not overlap.
+  var fileNameDivs = document.getElementsByClassName('file-name');
+  for (var i = 0; i < fileNameDivs.length; i++) {
+    fileNameDivs.item(i).style['width'] = 'auto';
+  }
+
   var fileboxDivs = document.getElementsByClassName('file-box');
   for (var i = 0; i < fileboxDivs.length; i++) {
     var metaDiv = getFirstChildWithClass(fileboxDivs[i], 'meta');
