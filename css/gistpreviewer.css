@@ -80,6 +80,6 @@
   width: 100%;
 }
 
-iframe {
+#gistpreview-iframe {
   border: none;
 }
