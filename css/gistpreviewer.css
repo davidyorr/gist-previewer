@@ -41,13 +41,23 @@
 }
 
 #gistpreview-overlay {
+  display: none;
   background: #eee;
-  opacity: 0;
   position: fixed;
   top: 0;
   width: 100%;
   height: 100%;
   z-index: 101;
+}
+
+.gistpreview-fadeInOverlay {
+  display: block !important;
+  -webkit-animation: fadeInTheatre 0.25s forwards;
+}
+
+.gistpreview-fadeOutOverlay {
+  display: block !important;
+  -webkit-animation: fadeOutTheatre 0.25s forwards;
 }
 
 .gistpreview-panel {
@@ -82,4 +92,24 @@
 
 #gistpreview-iframe {
   border: none;
+}
+
+@-webkit-keyframes fadeInTheatre {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.6;
+    visibility: visible;
+  }
+}
+
+@-webkit-keyframes fadeOutTheatre {
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
 }

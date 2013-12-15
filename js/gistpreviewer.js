@@ -178,6 +178,11 @@ function injectPreviewHTMLButtons(interval) {
     fileNameDivs.item(i).style['width'] = 'auto';
   }
 
+  // add the theatre overlay (will be hidden initially)
+  theatreOverlayDiv = document.createElement('div');
+  theatreOverlayDiv.id = 'gistpreview-overlay';
+  document.body.insertBefore(theatreOverlayDiv);
+
   var fileboxDivs = document.getElementsByClassName('file-box');
   for (var i = 0; i < fileboxDivs.length; i++) {
     var metaDiv = fileboxDivs[i].getElementsByClassName('meta')[0];
@@ -221,11 +226,9 @@ function displayWindow(sourceCode) {
   previewWindowDiv = document.createElement('div');
   previewIFrame = document.createElement('iframe');
   previewWindowPanel = buildPanel();
-  theatreOverlayDiv = document.createElement('div');
   bottomResizeDiv = document.createElement('div');
 
   previewWindowDiv.id = 'gistpreview-window';
-  theatreOverlayDiv.id = 'gistpreview-overlay';
   bottomResizeDiv.id = 'gistpreview-resizer';
   previewWindowPanel.className = 'gistpreview-panel';
   previewIFrame.id = 'gistpreview-iframe';
@@ -235,8 +238,8 @@ function displayWindow(sourceCode) {
   previewWindowDiv.appendChild(previewIFrame);
   previewWindowDiv.appendChild(bottomResizeDiv);
   document.body.insertBefore(previewWindowDiv);
-  document.body.insertBefore(theatreOverlayDiv);
-  fadeInDiv(theatreOverlayDiv, 0.6);
+  theatreOverlayDiv.classList.remove('gistpreview-fadeOutOverlay');
+  theatreOverlayDiv.classList.add('gistpreview-fadeInOverlay');
 
   previewIFrame.addEventListener('load', setIFrameHeight, false);
   bottomResizeDiv.addEventListener('mousedown', startResize, false);
@@ -294,31 +297,6 @@ function repositionPreviewWindow(evt, force) {
   previewWindowDiv.style.left = left + 'px';
 };
 
-// Fade effects
-// -----------------------------------------------------------------------------
-
-function fadeInDiv(div, max, callback) {
-  fadeDiv(div, max, 0.04, callback);
-};
-
-function fadeOutDiv(div, callback) {
-  fadeDiv(div, 0, -0.04, callback)
-};
-
-function fadeDiv(div, max, step, callback) {
-  div.style.opacity = (+(div.style.opacity) + step).toFixed(2);
-  var opacity = step > 0 ? +div.style.opacity : -div.style.opacity;
-  if (opacity < max) {
-    setTimeout(function() {
-      fadeDiv(div, max, step, callback);
-    }, 2);
-  } else {
-    if (typeof callback === 'function') {
-      callback();
-    }
-  }
-};
-
 // Button Handlers
 // -----------------------------------------------------------------------------
 
@@ -339,9 +317,8 @@ function runButtonHandler(e) {
 
 function closeButtonHandler(e) {
   previewWindowDiv.parentNode.removeChild(previewWindowDiv);
-  fadeOutDiv(theatreOverlayDiv, function() {
-    theatreOverlayDiv.parentNode.removeChild(theatreOverlayDiv)
-  });
+  theatreOverlayDiv.classList.remove('gistpreview-fadeInOverlay');
+  theatreOverlayDiv.classList.add('gistpreview-fadeOutOverlay');
   jsFiles.length = 0;
   cssFiles.length = 0;
 };
