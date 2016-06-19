@@ -1,407 +1,106 @@
-/**
- * Gist Previewer
- *
- * Copyright 2013 David Orr
- *
- * Released under the MIT license:
- *   http://www.opensource.org/licenses/mit-license.php
- */
-
-// References
-// -----------------------------------------------------------------------------
-
 var jsFiles = [];
 var cssFiles = [];
-var previewWindowContainerDiv;
-var previewWindowDiv;
-var previewIFrame;
-var previewWindowPanel;
-var theatreOverlayDiv;
-var bottomResizeDiv;
-var prevBrowserWidth = window.outerWidth;
-var prevBrowserHeight = window.outerHeight;
-
-// File
-// -----------------------------------------------------------------------------
-
-function File(url) {
-  this.url = url;
-};
 
 function initFileObjects(sourceCode) {
   var fileboxDivs = document.getElementsByClassName('file-box');
   for (var i = 0; i < fileboxDivs.length; i++) {
-    var fileboxDiv = fileboxDivs[i];
-    var metaDiv = fileboxDiv.getElementsByClassName('meta')[0];
-    var fileActionsDiv = metaDiv.getElementsByClassName('file-actions')[0];
-    var filetype = fileActionsDiv.getElementsByClassName('file-language')[0].innerHTML;
+    var fileHeaderDiv = fileboxDivs[i].getElementsByClassName('file-header')[0];
+    var fileActionsDiv = fileHeaderDiv.getElementsByClassName('file-actions')[0];
+    var filetype = getFileType(fileboxDivs[i]);
 
-    if (filetype === 'JavaScript' || filetype === 'CSS') {
-      var buttonGroupDiv = fileActionsDiv.getElementsByClassName('button-group')[0];
-      var buttons = buttonGroupDiv.children;
-      var linkURL = undefined;
-      for (var j = 0; j < buttons.length; j++) {
-        if (linkURL === undefined) {
-          linkURL = buttons[j].getElementsByClassName('raw-url')[0];
-        }
-      }
-
-      var file = new File(linkURL.href);
-      filetype === 'JavaScript' ? jsFiles.push(file) : cssFiles.push(file);
+    if (filetype === 'javascript' || filetype === 'css') {
+      var linkURL = getLinkURL(fileActionsDiv);
+      filetype === 'javascript' ? jsFiles.push({url:linkURL}) : cssFiles.push({url:linkURL});
     }
   }
-  retrieveJs(sourceCode);
 };
 
-// Inject the JavaScript and CSS code into the HTML file
-// -----------------------------------------------------------------------------
-
-function retrieveJs(sourceCode) {
-  if (jsFiles.length === 0) {
-    retrieveCss(sourceCode);
-    return;
-  }
-  var pos = sourceCode.indexOf('</body>');
-
-  if (pos === -1) {
-    pos = sourceCode.indexOf('</html>');
-  }
-  if (pos === -1) {
-    pos = sourceCode.length;
-  }
-
-  for (var i = 0; i < jsFiles.length; i++) {
-    var file = jsFiles[i];
-    var xhReq = new XMLHttpRequest();
-    xhReq.onreadystatechange = function() {
-      if (xhReq.readyState === 4 && xhReq.status === 200) {
-        sourceCode = addJs(sourceCode, xhReq.responseText, pos);
-        if (cssFiles.length === 0) {
-          displayWindow(sourceCode);
-        } else {
-          retrieveCss(sourceCode);
-        }
-      }
-    };
-    xhReq.open('GET', file.url, false);
-    xhReq.send(null);
-  }
-};
-
-function addJs(sourceCode, jsCode, pos) {
-  if (normalizeCode(sourceCode).indexOf(normalizeCode(jsCode)) > -1) {
-    return sourceCode;
-  }
-  return stringSplice(sourceCode, pos, '<script>'+jsCode+'</script>');
-};
-
-// removes a lot of unneccesary stuff in the code,
-// such as extra spaces, blank lines, etc.
-// we use this in cases where one of html file in the gist repo
-// contains another js or css file in it that is also in the repo.
-function normalizeCode(code) {
-  // remove lines that contain only spaces
-  var split = code.split('\n');
-  for (var i = 0; i < split.length; i++) {
-    var empty = true;
-    var line = split[i];
-    for (var j = 0; j < line.length; j++) {
-      if (line.charAt(j) !== ' ') {
-        empty = false;
-        break;
-      }
-    }
-    if (empty) {
-      split.splice(i, 1);
-    }
-  }
-  code = split.join('');
-
-  // convert multiple blank lines into a single blank line
-  // and multiple tab chars into single tab char
-  code = code.replace(/\n{2,}/g, '\n').replace(/\t{2,}/g, '\t');
-
-  return code;
-};
-
-function retrieveCss(sourceCode) {
-  if (cssFiles.length === 0) {
-    displayWindow(sourceCode);
-    return;
-  }
-  var pos = sourceCode.indexOf('</head>');
-
-  if (pos === -1) {
-    var pos = sourceCode.indexOf('<html>');
-    if (pos !== -1) {
-      pos += 6;
-    }
-    pos = pos;
-  }
-  if (pos === -1) {
-    pos = 0;
-  }
-
-  for (var i = 0; i < cssFiles.length; i++) {
-    var file = cssFiles[i];
-    var xhReq = new XMLHttpRequest();
-    xhReq.onreadystatechange = function() {
-      if (xhReq.readyState === 4 && xhReq.status === 200) {
-        sourceCode = addCss(sourceCode, xhReq.responseText, pos);
-        if (i === cssFiles.length-1) {
-          displayWindow(sourceCode);
-        }
-      }
-    };
-    xhReq.open('GET', file.url, false);
-    xhReq.send(null);
-  }
-};
-
-function addCss(sourceCode, cssCode, pos) {
-  if (normalizeCode(sourceCode).indexOf(normalizeCode(cssCode)) > -1) {
-    return sourceCode;
-  }
-  return stringSplice(sourceCode, pos, '<br><style>'+cssCode+'</style><br>');
-};
-
-// Inject the 'Preview HTML' button at the top of each file
-// -----------------------------------------------------------------------------
-
-function injectPreviewHTMLButtons(interval) {
-  // the DOM elements that display the file names have a width of 610px.
-  // inserting the 'Preview HTML' button causes the permalink button to
-  // be overlapped almost completely by the file name element. this
-  // makes the file name elements not overlap.
-  var fileNameDivs = document.getElementsByClassName('file-name');
-  for (var i = 0; i < fileNameDivs.length; i++) {
-    fileNameDivs.item(i).style['width'] = 'auto';
-  }
-
-  // add the theatre overlay (will be hidden initially)
-  theatreOverlayDiv = document.createElement('div');
-  theatreOverlayDiv.id = 'gistpreview-overlay';
-  document.body.insertBefore(theatreOverlayDiv);
-
+function injectPreviewHTMLButtons() {
   var fileboxDivs = document.getElementsByClassName('file-box');
   for (var i = 0; i < fileboxDivs.length; i++) {
-    var metaDiv = fileboxDivs[i].getElementsByClassName('meta')[0];
-    if (!metaDiv) {
-      return;
+    var fileHeaderDiv = fileboxDivs[i].getElementsByClassName('file-header')[0];
+    if (!fileHeaderDiv) {
+	    return;
     }
-    clearInterval(interval);
-    var fileActionsDiv = metaDiv.getElementsByClassName('file-actions')[0];
-    var filetype = fileActionsDiv.getElementsByClassName('file-language')[0].innerHTML;
-    if (filetype === 'HTML') {
-      var buttonGroupDiv = fileActionsDiv.getElementsByClassName('button-group')[0];
-      var buttons = buttonGroupDiv.children;
-      var linkURL = undefined;
-      for (var j = 0; j < buttons.length; j++) {
-        if (linkURL === undefined) {
-          linkURL = buttons[j].getElementsByClassName('raw-url')[0];
-        }
-      }
-      linkURL = linkURL.href;
+    var fileActionsDiv = fileHeaderDiv.getElementsByClassName('file-actions')[0];
+    var filetype = getFileType(fileboxDivs[i]);
+    if (filetype === 'html') {
+      var linkURL = getLinkURL(fileActionsDiv);
       // make sure we haven't already added it
-      if (buttonGroupDiv.getElementsByClassName('gistpreview-li').length === 0) {
-        var previewButtonLi = document.createElement('li');
-        previewButtonLi.className = 'gistpreview-li';
-        var previewButtonSpan = document.createElement('span');
-        previewButtonSpan.className = 'gistpreview-runButton';
-        previewButtonSpan['data-linkURL'] = linkURL;
-        previewButtonSpan.innerHTML = 'Preview HTML';
-        previewButtonLi.appendChild(previewButtonSpan);
-        buttonGroupDiv.appendChild(previewButtonLi);
-
-        previewButtonSpan.addEventListener('mousedown', runButtonHandler, false);
+      if (fileActionsDiv.getElementsByClassName('gistpreview-button').length === 0) {
+        var previewButtonA = document.createElement('a');
+        previewButtonA.innerHTML = 'Preview HTML';
+        previewButtonA.onclick = onPreviewButtonClicked;
+        previewButtonA.className = 'btn btn-sm gistpreview-button';
+        previewButtonA['data-linkURL'] = linkURL;
+        fileActionsDiv.appendChild(previewButtonA);
       }
     }
   }
 };
 
-// Window UI
+// Event Handlers
 // -----------------------------------------------------------------------------
 
-function displayWindow(sourceCode) {
-  previewWindowDiv = document.createElement('div');
-  previewIFrame = document.createElement('iframe');
-  previewWindowPanel = buildPanel();
-  bottomResizeDiv = document.createElement('div');
-
+function onPreviewButtonClicked() {
+  var theatreOverlayDiv = document.getElementById('gistpreview-overlay');
+  if (theatreOverlayDiv === null) {
+    theatreOverlayDiv = document.createElement('div');
+    theatreOverlayDiv.id = 'gistpreview-overlay';
+    theatreOverlayDiv.addEventListener('mousedown', onTheatreOverlayClicked, false);
+    document.body.insertBefore(theatreOverlayDiv, null);
+  }
+  var previewWindowDiv = document.createElement('div');
   previewWindowDiv.id = 'gistpreview-window';
-  bottomResizeDiv.id = 'gistpreview-resizer';
-  previewWindowPanel.className = 'gistpreview-panel';
-  previewIFrame.id = 'gistpreview-iframe';
-  previewIFrame.srcdoc = sourceCode;
-
-  previewWindowDiv.appendChild(previewWindowPanel);
-  previewWindowDiv.appendChild(previewIFrame);
-  previewWindowDiv.appendChild(bottomResizeDiv);
-  document.body.insertBefore(previewWindowDiv);
+  var iframe = document.createElement('iframe');
+  iframe.id = 'gistpreview-iframe';
+  document.body.insertBefore(iframe, null);
+  previewWindowDiv.appendChild(iframe);
+  document.body.insertBefore(previewWindowDiv, null);
   theatreOverlayDiv.classList.remove('gistpreview-fadeOutOverlay');
   theatreOverlayDiv.classList.add('gistpreview-fadeInOverlay');
 
-  previewIFrame.addEventListener('load', setIFrameHeight, false);
-  bottomResizeDiv.addEventListener('mousedown', startResize, false);
-
-  repositionPreviewWindow(null, true);
-  window.onresize = repositionPreviewWindow;
+  chrome.runtime.sendMessage({
+    htmlUrl: this['data-linkURL'],
+    jsFiles: jsFiles,
+    cssFiles: cssFiles
+  }, function(response) {
+    iframe.src = 'data:text/html;charset=utf-8,'+encodeURI(response.sourceCode);
+  });
 };
 
-function buildPanel() {
-  var div = document.createElement('div');
-  div.className = 'gistpreview-panel';
-  var closeButton = buildPanelButton('Close', 'gistpreview-close');
-  closeButton.addEventListener('mousedown', closeButtonHandler, false);
-  div.appendChild(closeButton);
-
-  return div;
-};
-
-function buildPanelButton(text, id) {
-  var div = document.createElement('div');
-  div.className = 'gistpreview-panelButton';
-  div.innerHTML = text;
-  div.id = id;
-
-  return div;
-};
-
-function setIFrameHeight() {
-  var body = this.contentDocument.body;
-  var height = Math.max(body.scrollHeight, body.offsetHeight);
-  height += 35; // little cushion
-  this.style.height = height + 'px';
-};
-
-// Repositioning when browser size changes
-// -----------------------------------------------------------------------------
-
-// force : force the function to execute
-function repositionPreviewWindow(evt, force) {
-  var windowOuterHeight = window.outerHeight;
-  var windowOuterWidth = window.outerWidth;
-
-  if (prevBrowserHeight === windowOuterHeight &&
-        prevBrowserWidth === windowOuterWidth &&
-        !force) {
-    return;
-  }
-  prevBrowserHeight = windowOuterHeight;
-  prevBrowserWidth = windowOuterWidth;
-
-  var top = window.innerHeight/10+window.scrollY;
-  var left = window.innerWidth/10;
-
-  previewWindowDiv.style.top = top + 'px';
-  previewWindowDiv.style.left = left + 'px';
-};
-
-// Button Handlers
-// -----------------------------------------------------------------------------
-
-function runButtonHandler(e) {
-  // when the request is complete, starts a chain
-  // initFileObjects -> retrieveJs -> [retrieveCss] -> displayWindow
-  var xhReq = new XMLHttpRequest();
-  xhReq.onreadystatechange = function() {
-    if (xhReq.readyState === 4 && xhReq.status === 200) {
-      initFileObjects(xhReq.responseText);
-    }
-  };
-  xhReq.open('GET', this['data-linkURL'], false);
-  xhReq.send(null);
-
-  return false;
-};
-
-function closeButtonHandler(e) {
+function onTheatreOverlayClicked() {
+  var previewWindowDiv = document.getElementById('gistpreview-window');
   previewWindowDiv.parentNode.removeChild(previewWindowDiv);
+  var theatreOverlayDiv = document.getElementById('gistpreview-overlay');
   theatreOverlayDiv.classList.remove('gistpreview-fadeInOverlay');
   theatreOverlayDiv.classList.add('gistpreview-fadeOutOverlay');
-  jsFiles.length = 0;
-  cssFiles.length = 0;
-};
-
-// Resizing the window
-// -----------------------------------------------------------------------------
-
-var startY, startHeight;
-function startResize(e) {
-  startY = e.clientY;
-  startHeight = parseInt(previewIFrame.style.height.slice(0, -2));
-
-  document.addEventListener('mousemove', doResize, false);
-  previewIFrame.contentDocument.addEventListener('mousemove', doResize, false);
-  document.addEventListener('mouseup', stopResize, false);
-};
-
-function doResize(e) {
-  var height = previewIFrame.style.height.slice(0, -2);
-  var newHeight;
-
-  if (e.srcElement === bottomResizeDiv ||
-      e.srcElement === document ||
-      e.srcElement === previewWindowDiv ||
-      e.srcElement === theatreOverlayDiv) {
-    newHeight = startHeight + e.clientY - startY;
-  } else {
-    newHeight = e.clientY;
-  }
-
-  if (newHeight > 45) {
-    previewIFrame.style.height = newHeight + 'px';
-  }
-};
-
-function stopResize(e) {
-  document.removeEventListener('mousemove', doResize, false);
-  previewIFrame.contentDocument.removeEventListener('mousemove', doResize, false);
-  document.removeEventListener('mouseup', stopResize, false);
 };
 
 // Util
 // -----------------------------------------------------------------------------
 
-function stringSplice(str, idx, insertStr) {
-  if (idx > 0) {
-    return str.slice(0, idx) + insertStr + str.slice(idx, str.length);
-  } else {
-    return insertStr + str;
+function getFileType(fileBoxDiv) {
+  var blobWrapperDiv = fileBoxDiv.getElementsByClassName('blob-wrapper')[0];
+  var classes = blobWrapperDiv.className.split(' ');
+  for (var i = 0; i < classes.length; i++) {
+    if (classes[i].indexOf('type-') === 0) {
+      return classes[i].substring(5);
+    }
+  }
+}
+
+function getLinkURL(fileActionsDiv) {
+  for (var j = 0; j < fileActionsDiv.children.length; j++) {
+    if (fileActionsDiv.children[j].innerHTML === 'Raw') {
+      return fileActionsDiv.children[j].href;
+    }
   }
 }
 
 // Init
 // -----------------------------------------------------------------------------
 
-function init() {
-  var interval = setInterval(function() {
-    injectPreviewHTMLButtons(interval);
-  }, 500);
-}
+initFileObjects();
+injectPreviewHTMLButtons();
 
-// returns true if a link was clicked
-function urlChanged(target) {
-  if (!target) {
-    return false;
-  }
-
-  if (target.tagName === 'A') {
-    return true;
-  } else {
-    return urlChanged(target.parentNode);
-  }
-}
-
-function handleUrlChange(e) {
-  if (urlChanged(e.target)) {
-    init();
-  }
-}
-
-// GitHub changes pages using ajax, so we catch when a link is clicked
-window.addEventListener('mousedown', handleUrlChange, false);
-window.addEventListener('keydown', handleUrlChange, false);
-
-// if the gist is reached directly
-init();
